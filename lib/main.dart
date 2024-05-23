@@ -1,6 +1,9 @@
+import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // 날짜 및 시간 형식을 위한 패키지 추가
-import 'package:webview_flutter/webview_flutter.dart'; // 웹뷰 패키지 추가
+import 'package:intl/intl.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(MyApp());
@@ -45,11 +48,10 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // 임시로 지어낸 학번과 비밀번호
   final Map<String, String> testCredentials = {
-    '20183743': '2541', // 하주헌
-    '20173995': '1234', // 이상윤
-    '20191118': '0000', // 고동욱
+    '20183743': '2541',
+    '20173995': '1234',
+    '20191118': '0000',
   };
 
   late final List<MapEntry<String, String>> credentialsList;
@@ -98,10 +100,8 @@ class _LoginPageState extends State<LoginPage> {
                 String studentID = studentIDController.text;
                 String password = passwordController.text;
 
-                // 입력된 학번과 비밀번호가 테스트용 계정 중 하나와 일치하는지 확인
                 for (final entry in credentialsList) {
                   if (entry.key == studentID && entry.value == password) {
-                    // 로그인 성공 처리
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (context) => MainPage(studentID: studentID)),
@@ -110,7 +110,6 @@ class _LoginPageState extends State<LoginPage> {
                   }
                 }
 
-                // 일치하는 학번과 비밀번호가 없을 경우 로그인 실패 처리
                 _showMessage('학번 또는 비밀번호가 올바르지 않습니다.');
               },
               child: Text('로그인'),
@@ -133,13 +132,13 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late String _currentTime; // 현재 시간을 저장할 변수 선언
+  late String _currentTime;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _updateTime(); // 현재 시간을 업데이트하는 함수 호출
+    _updateTime();
   }
 
   @override
@@ -185,16 +184,16 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
                   '좌석번호: E 137',
                   style: TextStyle(fontSize: 20),
                 ),
-                SizedBox(height: 20), // 추가된 코드
+                SizedBox(height: 20),
                 Text(
-                  '현재 시간: $_currentTime', // 추가된 코드
-                  style: TextStyle(fontSize: 20), // 추가된 코드
-                ), // 추가된 코드
+                  '현재 시간: $_currentTime',
+                  style: TextStyle(fontSize: 20),
+                ),
               ],
             ),
           ),
-          SchoolNoticePage(), // 학교 게시판 탭에 웹뷰 추가
-          Center(child: Text('마이 페이지')),
+          SchoolNoticePage(),
+          MyPage(studentID: widget.studentID),
         ],
       ),
     );
@@ -214,11 +213,10 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
   }
 
   void _updateTime() {
-    // 초까지 포함된 현재 시간을 가져오는 함수
     setState(() {
       _currentTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
     });
-    Future.delayed(Duration(seconds: 1), _updateTime); // 1초마다 시간을 업데이트하는 함수 호출
+    Future.delayed(Duration(seconds: 1), _updateTime);
   }
 
   @override
@@ -228,7 +226,6 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
   }
 }
 
-// 학교 게시판 웹뷰 페이지
 class SchoolNoticePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -236,5 +233,128 @@ class SchoolNoticePage extends StatelessWidget {
       initialUrl: 'https://www.bu.ac.kr/web/index.do',
       javascriptMode: JavascriptMode.unrestricted,
     );
+  }
+}
+
+class MyPage extends StatefulWidget {
+  final String studentID;
+
+  MyPage({required this.studentID});
+
+  @override
+  _MyPageState createState() => _MyPageState();
+}
+
+class _MyPageState extends State<MyPage> {
+  File? _profileImage;
+  TextEditingController _nameController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+  List<bool> _attendance = List.generate(3, (index) => Random().nextBool());
+  List<String> _attendanceTimes = List.generate(3, (index) => _generateRandomTime(10, 50, 11));
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.text = getStudentName(widget.studentID);
+    _emailController.text = '${widget.studentID}@bu.ac.kr';
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+        padding: EdgeInsets.all(
+            16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          GestureDetector(
+            onTap: _pickImage,
+            child: CircleAvatar(
+              radius: 50,
+              backgroundImage: _profileImage != null
+                  ? FileImage(_profileImage!)
+                  : AssetImage('assets/default_profile.png') as ImageProvider,
+              child: _profileImage == null
+                  ? Icon(Icons.account_circle, size: 50)
+                  : null,
+            ),
+          ),
+          SizedBox(height: 20),
+          TextField(
+            controller: _nameController,
+            decoration: InputDecoration(labelText: '이름'),
+          ),
+          SizedBox(height: 20),
+          TextField(
+            controller: _emailController,
+            decoration: InputDecoration(labelText: '이메일'),
+          ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text('정보 수정'),
+                    content: Text('이름: ${_nameController.text}\n이메일: ${_emailController.text}'),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text('확인'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            child: Text('정보 수정'),
+          ),
+          SizedBox(height: 20),
+          ListView.builder(
+            shrinkWrap: true,
+            itemCount: 3,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text('출석 여부: ${_attendance[index] ? '출석' : '미출석'}'),
+                subtitle: Text('출석 시간: ${_attendanceTimes[index]}'),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  String getStudentName(String studentID) {
+    switch (studentID) {
+      case '20183743':
+        return '하주헌';
+      case '20173995':
+        return '이상윤';
+      case '20191118':
+        return '고동욱';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  static String _generateRandomTime(int minHour, int minMinute, int maxHour) {
+    final hour = minHour + Random().nextInt(maxHour - minHour);
+    final minute = minMinute + Random().nextInt(60 - minMinute);
+    return '$hour:${minute.toString().padLeft(2, '0')}';
   }
 }
