@@ -69,53 +69,71 @@ class _LoginPageState extends State<LoginPage> {
         title: Text('BU NFC check-in'),
         backgroundColor: Colors.blue[700],
       ),
-      body: Padding(
-        padding: EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Image.asset(
-              'assets/bu.jpg',
-              width: 150,
-              height: 150,
-            ),
-            SizedBox(height: 20.0),
-            TextField(
-              controller: studentIDController,
-              decoration: InputDecoration(
-                labelText: '학번',
+      body: Stack(
+        children: <Widget>[
+          // 배경 이미지
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.25, // 투명도 조절 (0.0: 완전 투명, 1.0: 완전 불투명)
+              child: Image.asset(
+                'assets/bucam.jpg',
+                fit: BoxFit.cover,
               ),
             ),
-            SizedBox(height: 20.0),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: '비밀번호',
-              ),
-            ),
-            SizedBox(height: 20.0),
-            ElevatedButton(
-              onPressed: () {
-                String studentID = studentIDController.text;
-                String password = passwordController.text;
+          ),
+          // 로그인 UI
+          Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                ClipOval(
+                  child: Image.asset(
+                    'assets/bu.jpg',
+                    width: 150,
+                    height: 150,
+                  ),
+                ),
+                // 입력 칸 등 로그인 UI
+                SizedBox(height: 20.0),
+                TextField(
+                  controller: studentIDController,
+                  decoration: InputDecoration(
+                    labelText: '학번',
+                  ),
+                ),
+                SizedBox(height: 20.0),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: '비밀번호',
+                  ),
+                ),
+                SizedBox(height: 20.0),
+                ElevatedButton(
+                  onPressed: () {
+                    String studentID = studentIDController.text;
+                    String password = passwordController.text;
 
-                for (final entry in credentialsList) {
-                  if (entry.key == studentID && entry.value == password) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => MainPage(studentID: studentID)),
-                    );
-                    return;
-                  }
-                }
+                    for (final entry in credentialsList) {
+                      if (entry.key == studentID && entry.value == password) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => MainPage(studentID: studentID)),
+                        );
+                        return;
+                      }
+                    }
 
-                _showMessage('학번 또는 비밀번호가 올바르지 않습니다.');
-              },
-              child: Text('로그인'),
+                    _showMessage('학번 또는 비밀번호가 올바르지 않습니다.');
+                  },
+                  child: Text('로그인'),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -273,8 +291,8 @@ class _MyPageState extends State<MyPage> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-        padding: EdgeInsets.all(
-            16.0),
+      padding: EdgeInsets.all(
+          16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
